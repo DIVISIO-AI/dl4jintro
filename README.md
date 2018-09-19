@@ -24,7 +24,7 @@ so it is better if you downloaded them before the workshop.
     
 If you want, you can run the application once like so: 
 
-    mvn exec:java -Dexec.mainClass="divisio.dl4jintro.TrainingApp" -Dexec.args="-wf training_and -e 100"
+    mvn exec:java -Dexec.mainClass="divisio.dl4jintro.TrainingApp" -Dexec.args="-wf training_1bit_and -e 100"
 
 You should see a longer log output running by and end up with a folder `training_1bit_and` containing a log file and a zip file.
 Any SLF4J warnings at the beginning and warnings about lingering threads at the end can be safely ignored.
