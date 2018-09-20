@@ -15,7 +15,7 @@ Make sure the above software is installed.
 
 To prepare for the workshop, please clone this repository: 
 
-    git clone git@github.com:DIVSIO/dl4jintro.git
+    git clone https://github.com/DIVSIO/dl4jintro.git
     
 Build the project once to do download all dependencies, sources & javadoc. DL4J has a lot of dependencies, 
 so it is better if you downloaded them before the workshop.
