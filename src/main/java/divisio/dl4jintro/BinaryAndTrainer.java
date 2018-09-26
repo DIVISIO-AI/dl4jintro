@@ -42,7 +42,7 @@ public class BinaryAndTrainer extends AbstractDL4JMultilayerTrainer {
     /**
      * number of instances we train on
      */
-    private final int trainingSetSize = 90;
+    private final int trainingSetSize = 20;
 
     /**
      * number of instances we validate
