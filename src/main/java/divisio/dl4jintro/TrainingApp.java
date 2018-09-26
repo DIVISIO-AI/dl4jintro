@@ -94,7 +94,7 @@ public class TrainingApp {
      * Builds the trainer we want to train, just replace with a different trainer for comparison
      */
     private Trainer buildTrainer() {
-        return new BinaryOrTrainer();
+        return new BinaryXorTrainer();
     }
 
     /**
