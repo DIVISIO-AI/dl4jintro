@@ -32,7 +32,7 @@ public class BinaryAndTrainer extends AbstractDL4JMultilayerTrainer {
     /**
      * number of bits we want to AND
      */
-    private final int bitCount = 1;
+    private final int bitCount = 24;
 
     /**
      * number of instances per mini-batch
@@ -42,12 +42,12 @@ public class BinaryAndTrainer extends AbstractDL4JMultilayerTrainer {
     /**
      * number of instances we train on
      */
-    private final int trainingSetSize = 20;
+    private final int trainingSetSize = 2000;
 
     /**
      * number of instances we validate
      */
-    private final int validationSetSize = 10;
+    private final int validationSetSize = 100;
 
     /**
      * Our data for training, will be wrapped in a DataSetIterator
