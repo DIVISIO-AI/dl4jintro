@@ -127,9 +127,10 @@ public class Preprocessing {
         final DataAnalysis dataAnalysisRaw = AnalyzeLocal.analyze(tpRed.getFinalSchema(), new CollectionRecordReader(training));
         System.out.println(dataAnalysisRaw);
 
-        // apply normalization to all necessary columns
+        // build a new transform process for applying normalization to all columns except wine type & quality,
+        // move wine type column to front, so quality is last again
         final TransformProcess tpNormalize = new TransformProcess.Builder(tpRed.getFinalSchema())
-                .reorderColumns("wine type")//move wine type to front, so quality is last again
+                .reorderColumns("wine type")
                 .normalize("fixed acidity", Normalize.Standardize, dataAnalysisRaw)
                 .normalize("volatile acidity", Normalize.Standardize, dataAnalysisRaw)
                 .normalize("citric acid", Normalize.Standardize, dataAnalysisRaw)
