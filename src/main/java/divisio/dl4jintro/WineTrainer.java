@@ -67,12 +67,17 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
     protected MultiLayerNetwork buildNetwork() {
         final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()
             .seed(679876471)
-            .weightInit(WeightInit.XAVIER)
+            // try different weight inits: XAVIER, NORMAL, UNIFORM, XAVIER_UNIFORM, XAVIER_FAN_IN, RELU, RELU_UNIFORM
+            .weightInit(WeightInit.RELU_UNIFORM)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-            .updater(Adam.builder().learningRate(0.01).build())
+            //try different updaters:AdaDelta, AdaGrad, Adam, Nesterovs, RmsProp, Sgd
+            .updater(Adam.builder().learningRate(0.01).build())//try different learning rates, 0.0001 to 0.5
+            //try different Activation functions: RELU, LEAKYRELU, TANH, SIGMOID
             .activation(Activation.RELU)
             .list(
+                //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
                 new DenseLayer.Builder().nIn(nInputFeatures).nOut(nInputFeatures).build(),
+                //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
                 new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).nIn(nInputFeatures).nOut(nOutputFeatures)
                         .activation(Activation.SOFTMAX).build()
             )
