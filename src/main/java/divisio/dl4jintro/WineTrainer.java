@@ -65,34 +65,22 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
 
     @Override
     protected MultiLayerNetwork buildNetwork() {
-        final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()
-            .seed(679876471)
-            // try different weight inits: XAVIER, NORMAL, UNIFORM, XAVIER_UNIFORM, XAVIER_FAN_IN, RELU, RELU_UNIFORM
-            .weightInit(WeightInit.RELU_UNIFORM)
-            .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-            //try different updaters:AdaDelta, AdaGrad, Adam, Nesterovs, RmsProp, Sgd
-            .updater(Adam.builder().learningRate(0.01).build())//try different learning rates, 0.0001 to 0.5
-            //try different Activation functions: RELU, LEAKYRELU, TANH, SIGMOID
-            .activation(Activation.RELU)
-            .list(
-                //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
-                new DenseLayer.Builder().nIn(nInputFeatures).nOut(nInputFeatures).build(),
-                //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
-                new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).nIn(nInputFeatures).nOut(nOutputFeatures)
-                        .activation(Activation.SOFTMAX).build()
-            )
-            .build();
-        return new MultiLayerNetwork(nnConf);
+        //build your own simple network, use activation SOFTMAX for the output layer and Loss Function NEGATIVELOGLIKELIHOOD
+
+        //final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()...
+
+        // try different weight inits: XAVIER, NORMAL, UNIFORM, XAVIER_UNIFORM, XAVIER_FAN_IN, RELU, RELU_UNIFORM
+        //try different updaters:AdaDelta, AdaGrad, Adam, Nesterovs, RmsProp, Sgd
+        //try different Activation functions: RELU, LEAKYRELU, TANH, SIGMOID
+        //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
+        //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
+
+        //return new MultiLayerNetwork(nnConf);
     }
 
     private DataSetIterator buildIterator(final File csvFile, final int batchSize) {
         try {
-            final RecordReader rr = new CSVRecordReader();
-            rr.initialize(new FileSplit(csvFile));
-            return new RecordReaderDataSetIterator(
-                    rr, null, batchSize,
-                    idxOutputFeature, idxOutputFeature, nOutputFeatures, -1,
-                    false);
+            //build a RecordReaderDataSetIterator to read a csv file saved in preprocessing
         } catch (final Exception ioe) {
             throw new RuntimeException("Could not build RecordReader for: " + csvFile, ioe);
         }
@@ -105,8 +93,9 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
 
     @Override
     public void validate() {
-        final DataSetIterator validationDataIterator = buildIterator(new File("preprocessed_data/validation.csv"), 1);
-
+        final DataSetIterator validationDataIterator = buildIterator(
+                new File("preprocessed_data/validation.csv"), 1);
+        //we now need a different evaluation, as we do not have a multiclass classifier - each point of data only has one class (it's quality)
         final Evaluation evaluationResult = nn.evaluate(validationDataIterator);
 
         log.info("\n" + evaluationResult.stats());
