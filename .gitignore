@@ -4,3 +4,5 @@ data
 target
 *.iml
 training_*
+preprocessed_data
+
