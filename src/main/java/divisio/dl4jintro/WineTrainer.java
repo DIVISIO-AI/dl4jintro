@@ -41,17 +41,17 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
     /**
      * number of input columns
      */
-    private final int nInputFeatures = 12;
+    public static final int nInputFeatures = 12;
 
     /**
      * the output feature is in the last column
      */
-    private final int idxOutputFeature = nInputFeatures;
+    public static final int idxOutputFeature = nInputFeatures;
 
     /**
      * number of output classes (scores are 1-10)
      */
-    private final int nOutputFeatures = 10;
+    public static final int nOutputFeatures = 10;
 
     /**
      * number of instances per mini-batch
@@ -105,7 +105,11 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
 
     @Override
     public void validate() {
-        final DataSetIterator validationDataIterator = buildIterator(new File("preprocessed_data/validation.csv"), 1);
+        validate(new File("preprocessed_data/validation.csv"));
+    }
+
+    public void validate(final File file) {
+        final DataSetIterator validationDataIterator = buildIterator(file, 1);
 
         final Evaluation evaluationResult = nn.evaluate(validationDataIterator);
 
