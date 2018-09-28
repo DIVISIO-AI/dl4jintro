@@ -74,19 +74,29 @@ public class WinePrediction {
         //there is no need to do anything
         while (dataSetIterator.hasNext()) {
             final DataSet dataSet = dataSetIterator.next();
-            //this time, we need only the features, as there is no learning - we just want the resut
-            final INDArray features = dataSet.getFeatures();
-            //perform the prediction - not that in production you need to make sure this is synchronized, as the network
+            //this time, we need only the features, as there is no learning - we just want the result
+            //final INDArray features =
+
+            //perform the prediction using the Neural Networks output function
+            // - note that in production you need to make sure this is synchronized, as the network
             //is not thread-safe
-            final INDArray prediction = nn.output(features);
-            //get the index with the highest value - that is our wine score
-            final INDArray maxIdx = prediction.argMax(1);
-            //get the int out of the INDArray
-            final int predictedClass = maxIdx.getInt(0);
-            //get the expected class from the dataSet
-            final int expectedClass = dataSet.getLabels().argMax(1).getInt(0);
-            final boolean correct = predictedClass == expectedClass;
-            System.out.println((correct ? "Y " : "N ") + predictedClass + ", " + expectedClass);
+            //final INDArray prediction =
+
+            //get the output index with the highest value using the argMax function - that is our wine score
+            //(the result of the network is an array of probabilities for each class)
+            //TIPP: use the debugger to inspect the resulting array and determine the axis
+            //final INDArray maxIdx =
+
+            //get the int out of the INDArray with getInt
+            //final int predictedClass =
+
+            //get the expected class from the dataSet in the same way, using getLabels, argMax and getInt
+            //final int expectedClass =
+
+            //we simply print the result here - for real test scenarious, e.g. image classification you might also print
+            //the original file name etc.
+            //final boolean correct = predictedClass == expectedClass;
+            //System.out.println((correct ? "Y " : "N ") + predictedClass + ", " + expectedClass);
         }
     }
 
