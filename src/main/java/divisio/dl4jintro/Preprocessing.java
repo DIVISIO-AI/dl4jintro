@@ -91,7 +91,7 @@ public class Preprocessing {
         //load white wine data with a CSV Record reader
         //CSVRecordReader rr = ...
 
-        //we need a List<List<Writable>> to work without spar, use the readAll method to get such a list
+        //we need a List<List<Writable>> to work without spark, use the readAll method to get such a list
         //final List<List<Writable>> whiteWine = ...
 
         // load the red wine data with a *new* CSV Record reader
