@@ -154,13 +154,17 @@ public class Preprocessing {
         System.out.println(dataAnalysisProcessed);
 
         // write each dataset to a new CSV File using the CSVRecordWriter (note that the output files have to exist first for writing)
-        final RecordWriter rw = new CSVRecordWriter();
+        RecordWriter rw = new CSVRecordWriter();
         testingFile.createNewFile();
         rw.initialize(new FileSplit(testingFile), new NumberOfRecordsPartitioner());
         rw.writeBatch(testing);
+
+        rw = new CSVRecordWriter();
         validationFile.createNewFile();
         rw.initialize(new FileSplit(validationFile), new NumberOfRecordsPartitioner());
         rw.writeBatch(validation);
+
+        rw = new CSVRecordWriter();
         trainingFile.createNewFile();
         rw.initialize(new FileSplit(trainingFile), new NumberOfRecordsPartitioner());
         rw.writeBatch(training);
