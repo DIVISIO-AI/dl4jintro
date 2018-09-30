@@ -65,22 +65,34 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
 
     @Override
     protected MultiLayerNetwork buildNetwork() {
-        //build your own simple network, use activation SOFTMAX for the output layer and Loss Function NEGATIVELOGLIKELIHOOD
-
-        //final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()...
-
-        // try different weight inits: XAVIER, NORMAL, UNIFORM, RELU_UNIFORM
-        //try different updaters:Adam, Nesterovs, RmsProp, Sgd
-        //try different Activation functions: RELU, TANH, SIGMOID
-        //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
-        //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
-
-        //return new MultiLayerNetwork(nnConf);
+        final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()
+                // try different weight inits: XAVIER, NORMAL, UNIFORM, RELU_UNIFORM
+                .weightInit(WeightInit.XAVIER)
+                .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
+                //try different updaters:Adam, Nesterovs, RmsProp, Sgd
+                //try different learning rates: 0.0001 ... 0.1
+                .updater(Adam.builder().learningRate(0.01).build())
+                //try different Activation functions: RELU, TANH, SIGMOID
+                .activation(Activation.RELU)
+                .list(
+                        //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
+                        new DenseLayer.Builder().nIn(nInputFeatures).nOut(nInputFeatures).build(),
+                        //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
+                        new OutputLayer.Builder(LossFunction.NEGATIVELOGLIKELIHOOD).nIn(nInputFeatures).nOut(nOutputFeatures)
+                                .activation(Activation.SOFTMAX).build()
+                )
+                .build();
+        return new MultiLayerNetwork(nnConf);
     }
 
     private DataSetIterator buildIterator(final File csvFile, final int batchSize) {
         try {
-            //build a RecordReaderDataSetIterator to read a csv file saved in preprocessing
+            final RecordReader rr = new CSVRecordReader();
+            rr.initialize(new FileSplit(csvFile));
+            return new RecordReaderDataSetIterator(
+                    rr, null, batchSize,
+                    idxOutputFeature, idxOutputFeature, nOutputFeatures, -1,
+                    false);
         } catch (final Exception ioe) {
             throw new RuntimeException("Could not build RecordReader for: " + csvFile, ioe);
         }
