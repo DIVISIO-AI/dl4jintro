@@ -89,45 +89,54 @@ public class Preprocessing {
         final File testingFile    = new File(preprocessingFolder, "testing.csv");
 
         //load white wine data with a CSV Record reader
-        //CSVRecordReader rr = ...
+        CSVRecordReader rr = new CSVRecordReader(1, ';', '"');
+        rr.initialize(new FileSplit(whiteWineFile));
 
         //we need a List<List<Writable>> to work without spark, use the readAll method to get such a list
-        //final List<List<Writable>> whiteWine = ...
+        final List<List<Writable>> whiteWine = readAll(rr);
 
         // load the red wine data with a *new* CSV Record reader
         // You have to re-create the reader, as otherwise the header is not skipped, re-initializing is not enough
+        // ...
         //final List<List<Writable>> redWine = ...
 
         // build two transform processes to add a constant integer column name "wine type",
         // with value 0 for white wine and value 1 for red
-        //final TransformProcess tpWhite = ...
+        //final TransformProcess tpWhite = new TransformProcess.Builder(inputSchema)
+        //                                 /*add necessary step here*/
+        //                                 .build();
         //final TransformProcess tpRed = ...
 
         //process the red and white wine csvs with their respective transform process and a LocalTransformExecutor,
         //then add the results to one list
         final List<List<Writable>> allWineWithType = new ArrayList<>();
-
-
+        //allWineWithType.addAll(LocalTransformExecutor.execute(....));
+        //allWineWithType.addAll(LocalTransformExecutor.execute(....));
 
         //the red & white examples are now consecutive (first all white, then all red examples)
         //shuffle the list so they are in random order
-
+        Collections.shuffle(allWineWithType);
 
         // split the list into testing, validation & training data, ratio 10:10:80
-        //List<List<Writable>> testing    = ...
-        //List<List<Writable>> validation = ...
-        //List<List<Writable>> training   = ...
-
+        final int splitpoint1 = allWineWithType.size() / 10;
+        final int splitpoint2 = splitpoint1 * 2;
+        List<List<Writable>> testing    = allWineWithType.subList(0, splitpoint1);
+        List<List<Writable>> validation = allWineWithType.subList(splitpoint1, splitpoint2);
+        List<List<Writable>> training   = allWineWithType.subList(splitpoint2, allWineWithType.size());
 
         //Use the *training* data to analyze the statistical properties of the columns using the AnalyzeLocal class.
         //You can use the CollectionRecordReader to wrap a list of Writables into a RecordReader
-        //final DataAnalysis dataAnalysisRaw = ...
+        //The current schema after merging red & white can be obtained from the tpRed or tpWhite transform process
+        //final DataAnalysis dataAnalysisRaw = AnalyzeLocal.analyze(...);
         //System.out.println(dataAnalysisRaw);
 
 
         // build a new transform process for applying normalization to all columns except wine type & quality,
         // move wine type column to front, so quality is last again
-        //final TransformProcess tpNormalize = new TransformProcess.Builder(tpRed.getFinalSchema())...
+        //final TransformProcess tpNormalize = new TransformProcess.Builder(tpRed.getFinalSchema())
+        //                                        .normalize("fixed acidity", Normalize.Standardize, dataAnalysisRaw)
+        //                                        /*normalize the other columns as well*/
+        //                                        .build();
 
 
         // apply normalization transformation to each of the three datasets by using the LocalTransformExecutor again
@@ -136,14 +145,20 @@ public class Preprocessing {
         //training   = ...
 
 
-        // create an analysis of the final training data
+        // create an analysis of the final training data, using AnalyzeLocal again
         //final DataAnalysis dataAnalysisProcessed = ...
         //System.out.println(dataAnalysisProcessed);
 
 
         // write each dataset to a new CSV File using the CSVRecordWriter (note that the output files have to exist first for writing)
-        // testingFile.createNewFile();
-        // ...
+        // Like with the reader, make sure you use a fresh CSVRecordWriter every time
+        RecordWriter rw = new CSVRecordWriter();
+        testingFile.createNewFile();
+        rw.initialize(new FileSplit(testingFile), new NumberOfRecordsPartitioner());
+        rw.writeBatch(testing);
+        //...
+        //repeat for validation & training
+        //...
 
         // done!
         //System.out.println("Preprocessing done!");
