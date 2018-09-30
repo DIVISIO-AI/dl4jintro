@@ -20,35 +20,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 /**
- * A DL4J Multilayer trainer that trains a net to AND bits of two inputs together.
+ * A DL4J Multilayer trainer that trains a net to XOR bits of two inputs together.
  */
 public class BinaryXorTrainer extends AbstractDL4JMultilayerTrainer {
 
     private static final Logger log = LoggerFactory.getLogger(BinaryXorTrainer.class);
 
     /**
-     * number of bits we want to AND
-     */
-    private final int bitCount = 1;
-
-    /**
      * number of instances per mini-batch
      */
-    private final int batchSize = 5;
-
-    /**
-     * number of instances we train on
-     */
-    private final int trainingSetSize = 20;
-
-    /**
-     * number of instances we validate
-     */
-    private final int validationSetSize = 10;
+    private final int batchSize = 1; //try 1 and 4
 
     /**
      * Our data for training, will be wrapped in a DataSetIterator
@@ -62,21 +47,19 @@ public class BinaryXorTrainer extends AbstractDL4JMultilayerTrainer {
     private List<Pair<INDArray, INDArray>> validationData = null;
 
     public BinaryXorTrainer() {
-        super(10);
+        super(1);
     }
 
     @Override
     protected MultiLayerNetwork buildNetwork() {
         final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()
-            .seed(679876471)
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .updater(Adam.builder().learningRate(0.01).build())
             .activation(Activation.RELU)
             .list(
-                new DenseLayer.Builder().nIn(bitCount * 2).nOut(bitCount * 2).build(),
-                new DenseLayer.Builder().nIn(bitCount * 2).nOut(bitCount * 2).build(),
-                new OutputLayer.Builder(LossFunction.L2).nIn(bitCount * 2).nOut(bitCount)
+                new DenseLayer.Builder().nIn(2).nOut(2).build(),
+                new OutputLayer.Builder(LossFunction.L2).nIn(2).nOut(1)
                         .activation(Activation.SIGMOID).build()
             )
             .build();
@@ -84,20 +67,19 @@ public class BinaryXorTrainer extends AbstractDL4JMultilayerTrainer {
     }
 
     /**
-     * Builds an AND test instance with the currently configured number of bits
-     * @param rnd the random generator to use, not null
+     * Builds an AND test instance with the given boolean values
+     * @param bitA the first input
+     * @param bitB the second input
      * @return a test instance with two sets of bits as input and two sets of bits as output
      */
-    public Pair<INDArray, INDArray> buildInstance(final Random rnd) {
-        final double[] input = new double[bitCount * 2];
-        final double[] labels = new double[bitCount];
-        for (int idx = 0; idx < bitCount; ++idx) {
-            boolean bitA = rnd.nextBoolean();
-            boolean bitB = rnd.nextBoolean();
-            boolean result = bitA ^ bitB;
-            input[idx]            = bitA   ? 1.0 : 0.0;
-            input[idx + bitCount] = bitB   ? 1.0 : 0.0;
-            labels[idx]           = result ? 1.0 : 0.0;
+    public Pair<INDArray, INDArray> buildInstance(final boolean bitA, final boolean bitB) {
+        final double[] input = new double[2];
+        final double[] labels = new double[1];
+        for (int idx = 0; idx < labels.length; ++idx) {
+            final boolean result = bitA ^ bitB;
+            input[idx * 2]     = bitA   ? 1.0 : 0.0;
+            input[idx * 2 + 1] = bitB   ? 1.0 : 0.0;
+            labels[idx]        = result ? 1.0 : 0.0;
         }
         return Pair.create(
             Nd4j.create(input),
@@ -106,23 +88,28 @@ public class BinaryXorTrainer extends AbstractDL4JMultilayerTrainer {
     }
 
     /**
-     * Builds the given number of training instances
-     * @param numberOfInstances
+     * Builds all combinations of instances*
      * @return a list with instances, never null
      */
-    public List<Pair<INDArray, INDArray>> buildData(final int numberOfInstances) {
-        final Random rnd = new Random();
-        final ArrayList<Pair<INDArray, INDArray>> result = new ArrayList<>(numberOfInstances);
-        for (int i = 0; i < numberOfInstances; ++i) {
-            result.add(buildInstance(rnd));
+    public List<Pair<INDArray, INDArray>> buildData() {
+        final ArrayList<Pair<INDArray, INDArray>> result = new ArrayList<>(4);
+
+        for (final boolean bitA : new boolean[]{true, false}) {
+            for (final boolean bitB : new boolean[]{true, false}) {
+                result.add(buildInstance(bitA, bitB));
+            }
         }
+
         return result;
     }
 
     @Override
     protected DataSetIterator buildIterator() {
         if (trainingData == null) {
-            trainingData = buildData(trainingSetSize);
+            trainingData = buildData();
+            //shuffle the data, so we get a different order between resumed trainings - helps a bit escaping
+            //when the network is "stuck"
+            Collections.shuffle(trainingData);
         }
         return new INDArrayDataSetIterator(trainingData, batchSize);
     }
@@ -130,12 +117,28 @@ public class BinaryXorTrainer extends AbstractDL4JMultilayerTrainer {
     @Override
     public void validate() {
         if (validationData == null) {
-            validationData = buildData(validationSetSize);
+            validationData = buildData();
         }
 
         final ROCMultiClass evaluationResult =
                 nn.evaluateROCMultiClass(new INDArrayDataSetIterator(validationData, 1));
 
         log.info("\n" + evaluationResult.stats());
+
+        //manually print a couple of examples
+        final int maxExamples = 4;
+        int counter = 0;
+        log.info("\n Raw outputs: ");
+        for (final Pair<INDArray, INDArray> inputOutput : validationData) {
+            final INDArray input  = inputOutput.getFirst();
+            final INDArray output = inputOutput.getSecond();
+            final INDArray prediction = nn.output(input);
+            log.info(input + " -> " + prediction + ", training data: " + output);
+
+            ++counter;
+            if (counter >= maxExamples) {
+                break;
+            }
+        }
     }
 }

@@ -7,11 +7,12 @@ import ch.qos.logback.core.FileAppender;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import com.beust.jcommander.converters.FileConverter;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Main method to run Training with DL4J, handles command line parsing, logging,
@@ -26,33 +27,35 @@ public class TrainingApp {
                help = true)
     private boolean help;
 
-    @Parameter(names = {"-wf", "--workingFolder"},
-               description = "Folder for loading / saving models, log file, etc.",
-               converter = FileConverter.class,
-               required = true)
-    private File workingFolder;
-
     @Parameter(names = {"-e", "--epochs"},
-               description = "Number of epochs to train. You must either specify this or set the --validate-only flag")
-    private Integer epochs;
+               description = "Number of epochs to train.")
+    private Integer epochs = 100;
 
-    @Parameter(names = {"--validate-only"},
-            description = "Only run validation on the most current model, cannot be combined with -e")
+    @Parameter(names = {"-v", "--validate-only"},
+            description = "Only run validation on the most current model, cannot be combined with -e or -r")
     private boolean validateOnly = false;
 
-    @Parameter(names = {"-s", "--save-every-s"},
+    @Parameter(names = {"-r", "--resume"},
+            description = "Resume training from last save, cannot be comined with -v")
+    private boolean resume = false;
+
+    @Parameter(names = {"--save-every-s"},
                description = "number of seconds between saves")
     private int saveEveryS = 5 * 60;
 
-    @Parameter(names = {"-v", "--validate-every-s"},
+    @Parameter(names = {"--validate-every-s"},
                description = "number of seconds betwwen validations ")
     private int validateEveryS = 60;
-
 
     /**
      * the trainer we are training
      */
     private Trainer trainer;
+
+    /**
+     * the folder for logging, saved models etc.
+     */
+    private File workingFolder;
 
     /**
      * flag indicating if the application is still running
@@ -68,25 +71,42 @@ public class TrainingApp {
      * initializes working folder, logging & trainer
      */
     private void init() {
+        //build the trainer we currently want to work with
+        trainer = buildTrainer();
+        //create a working folder with the trainer's class name
+        workingFolder = new File(trainer.getClass().getSimpleName());
+
+        //if we are not resuming the training, delete the old folder (if it exists)
+        if (!resume && workingFolder.exists()) {
+            try {
+                log.info("Starting fresh training, deleting old working folder: " + workingFolder);
+                FileUtils.deleteDirectory(workingFolder);
+            } catch (final IOException ioe) {
+                throw new RuntimeException("Could not delete existing folder " + workingFolder + " to start new training.", ioe);
+            }
+        }
+
         //create working dir if it does not exist
         //noinspection ResultOfMethodCallIgnored (we do not care if the dir already existed or was newly created)
         workingFolder.mkdirs();
         if (!workingFolder.isDirectory() || !workingFolder.canRead() || !workingFolder.canWrite()) {
             throw new RuntimeException("Cannot access " + workingFolder);
         }
+
         //init logging so our log output lands in the working dir
         initLogFile();
-        //build the trainer we currently want to work with
-        trainer = buildTrainer();
+
         log.info("Created trainer: " + trainer);
-        //look for a previous save file, if found, load from it, otherwise start with a vanilla trainer
-        final File lastSave = trainer.findLastSaveState(workingFolder);
-        if (lastSave == null) {
-            log.info("No previous save found, starting training from scratch.");
-            trainer.init();
-        } else {
+        //now either start or resume training
+        if (resume) {
+            final File lastSave = trainer.findLastSaveState(workingFolder);
+            if (lastSave == null) {
+                throw new RuntimeException("Cannot resume training, last save file not found.");
+            }
             log.info("Found previous save: " + lastSave + ", resuming training.");
             trainer.load(lastSave);
+        } else {
+            trainer.init();
         }
     }
 
@@ -213,12 +233,6 @@ public class TrainingApp {
         final JCommander commander = JCommander.newBuilder().addObject(app).build();
         try {
             commander.parse(args);
-            if (app.epochs == null && !app.validateOnly) {
-                throw new ParameterException("You must either specify -e or --validate-only.");
-            }
-            if (app.epochs != null && app.validateOnly) {
-                throw new ParameterException("You cannot specify -e and --validate-only at the same time.");
-            }
         } catch (final ParameterException pe) {
             //thrown if the given arguments are invalid - print the error message, print usage instructions & exit.
             System.out.println(pe.getMessage());
