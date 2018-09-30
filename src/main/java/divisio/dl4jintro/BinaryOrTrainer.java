@@ -31,7 +31,7 @@ public class BinaryOrTrainer extends AbstractDL4JMultilayerTrainer {
     private static final Logger log = LoggerFactory.getLogger(BinaryOrTrainer.class);
 
     /**
-     * number of bits we want to AND
+     * number of bits we want to OR
      */
     private final int bitCount = 24;
 
@@ -68,13 +68,11 @@ public class BinaryOrTrainer extends AbstractDL4JMultilayerTrainer {
     @Override
     protected MultiLayerNetwork buildNetwork() {
         final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()
-            .seed(679876471)
             .weightInit(WeightInit.XAVIER)
             .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
             .updater(Adam.builder().learningRate(0.01).build())
             .activation(Activation.RELU)
             .list(
-                new DenseLayer.Builder().nIn(bitCount * 2).nOut(bitCount * 2).build(),
                 new OutputLayer.Builder(LossFunction.L2).nIn(bitCount * 2).nOut(bitCount)
                         .activation(Activation.SIGMOID).build()
             )
@@ -136,5 +134,21 @@ public class BinaryOrTrainer extends AbstractDL4JMultilayerTrainer {
                 nn.evaluateROCMultiClass(new INDArrayDataSetIterator(validationData, 1));
 
         log.info("\n" + evaluationResult.stats());
+
+        //manually print a couple of examples
+        final int maxExamples = 5;
+        int counter = 0;
+        log.info("\n Raw outputs: ");
+        for (final Pair<INDArray, INDArray> inputOutput : validationData) {
+            final INDArray input  = inputOutput.getFirst();
+            final INDArray output = inputOutput.getSecond();
+            final INDArray prediction = nn.output(input);
+            log.info("\n" + input + "\n" + prediction + "\n" + output);
+
+            ++counter;
+            if (counter >= maxExamples) {
+                break;
+            }
+        }
     }
 }
