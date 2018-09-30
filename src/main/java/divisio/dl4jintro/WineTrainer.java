@@ -69,9 +69,9 @@ public class WineTrainer extends AbstractDL4JMultilayerTrainer {
 
         //final MultiLayerConfiguration nnConf = new NeuralNetConfiguration.Builder()...
 
-        // try different weight inits: XAVIER, NORMAL, UNIFORM, XAVIER_UNIFORM, XAVIER_FAN_IN, RELU, RELU_UNIFORM
-        //try different updaters:AdaDelta, AdaGrad, Adam, Nesterovs, RmsProp, Sgd
-        //try different Activation functions: RELU, LEAKYRELU, TANH, SIGMOID
+        // try different weight inits: XAVIER, NORMAL, UNIFORM, RELU_UNIFORM
+        //try different updaters:Adam, Nesterovs, RmsProp, Sgd
+        //try different Activation functions: RELU, TANH, SIGMOID
         //try different numbers and widths of layers, experiment with all layers same width, layers getting slimmer...
         //possible Loss functions: NEGATIVELOGLIKELIHOOD, XENT
 
