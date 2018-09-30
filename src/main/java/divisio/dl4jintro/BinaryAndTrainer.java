@@ -73,7 +73,7 @@ public class BinaryAndTrainer extends AbstractDL4JMultilayerTrainer {
         final double[] input = new double[2];
         final double[] labels = new double[1];
         for (int idx = 0; idx < labels.length; ++idx) {
-            boolean result = bitA ^ bitB;
+            final boolean result = bitA && bitB;
             input[idx * 2]     = bitA   ? 1.0 : 0.0;
             input[idx * 2 + 1] = bitB   ? 1.0 : 0.0;
             labels[idx]        = result ? 1.0 : 0.0;
